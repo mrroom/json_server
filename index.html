@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Home</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <meta name="theme-color" content="#563d7c">
+
+    <!-- Custom styles for this template -->
+    <link href="https://fonts.googleapis.com/css?family=Playfair+Display:700,900" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <!-- <link href="dashboard.css" rel="stylesheet"> -->
+    <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vuex/dist/vuex.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-resource/dist/vue-resource.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+	<div id="main">
+		<h3>Temperature result list</h3>
+		<div>
+			<form class="form-inline">
+				<label class="sr-only" for="user">User</label> 
+				<select class="custom-select my-1 mr-sm-2" id="user" v-model="temp.user">
+					<option value="user1">user1</option>
+				    <option value="user2">user2</option>
+				    <option value="user3">user3</option>
+				    <option value="user4">user4</option>
+				    <option value="user5">user5</option>
+				</select>
+				<div class="custom-control custom-radio my-1 mr-sm-2">
+					<input type="radio" class="custom-control-input" name="flag" id="flag_am" value="AM" v-model="temp.flag" >
+				    <label class="custom-control-label" for="flag_am">AM</label>
+				</div>
+				<div class="custom-control custom-radio my-1 mr-sm-2">
+					<input type="radio" class="custom-control-input" name="flag" id="flag_pm" value="PM" v-model="temp.flag">
+				    <label class="custom-control-label" for="flag_pm">PM</label>
+				</div>
+				<label class="sr-only" for="value">Value</label> 
+				<input type="text" class="form-control mb-2 mr-sm-2" id="value" v-model="temp.value" placeholder="온도">
+				<button type="button" class="btn btn-primary mb-2" @click="addTemp">Add</button>
+			</form>
+		</div>
+		<div>
+			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th scope="col">#</th>
+						<th scope="col">Date</th>
+						<th scope="col">Flag</th>
+						<th scope="col">User</th>
+						<th scope="col">Value</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="(temp, index) in tempList">
+						<td scope="row">{{index + 1}}</td>
+						<td>{{temp.date}}</td>
+						<td>{{temp.flag}}</td>
+						<td>{{temp.user}}</td>
+						<td>{{temp.value}}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
+<script>
+	//로컬 객체 처리
+	var Main = new Vue({
+		el : "#main",
+		data : {
+			server : null,
+			tempList : [],
+			temp : {}
+		},
+		methods : {
+
+			initTemp : function() {
+				
+				this.temp.flag="AM";
+				this.temp.user="user1";
+				this.temp.value=null;
+				
+			},
+			
+			getTempList : function() {
+
+				var self = this;
+				var url = this.server + "/temperature?_sort=date,flag,user&_order=asc,asc,asc";
+				var params = {};
+
+				axios.get(url).then(function(response) {
+
+					console.log("response", response);
+					var status = response.status;
+					
+					self.tempList = response.data;
+
+				});
+
+			},
+
+			addTemp : function() {
+
+				var self = this;
+				var url = this.server + "/temperature";
+				var params = {
+					"date" : new Date().toISOString().slice(0,10),
+					"flag" : this.temp.flag,
+					"user" : this.temp.user,
+					"value" : this.temp.value
+				};
+
+				console.log("url, params : ", url, params);
+				
+				axios.post(url, params).then(function(response) {
+
+					var status = response.status;
+					var data = response.data;
+
+					console.log("data : ", data);
+					
+					self.getTempList();
+					self.initTemp();
+					
+				});
+
+			}
+		},
+		created : function() {
+			console.log("Main Created");
+			this.server = "http://34.69.160.36:8080"
+		},
+		mounted : function() {
+			var self = this;
+			this.$nextTick(function() {
+				console.log("Main Mounted");
+				self.getTempList();
+				self.initTemp();
+			})
+		}
+
+	});
+</script>
+</html>
